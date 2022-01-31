@@ -17,15 +17,13 @@
 - name: Download Home Assistant disk image
   get_url:
     url: '{{ haos_release.browser_download_url }}'
-    dest: '{{ haos_tempdir }}/{{ haos_release.name }}'
+    dest: '{{ haos_tempdir.path }}/{{ haos_release.name }}'
 
 - name: Unarchive downloaded image
   ansible.builtin.unarchive:
-    src: '{{ tempdir }}{{ haos_image_url }}'
-    dest: '{{ haos_tempdir }}'
+    src: '{{ haos_tempdir.path }}/{{ haos_release.name }}'
+    dest: '{{ haos_tempdir.path }}'
     remote_src: yes
-
-- fail:
 
 #- name: Create VM
 #  community.general.collection:

@@ -16,7 +16,7 @@
 
 - name: Download Home Assistant disk image
   get_url:
-    url: '{{ haos_release.url }}'
+    url: '{{ haos_release.browser_download_url }}'
     dest: '{{ haos_tempdir }}/{{ haos_release.name }}'
 
 - name: Unarchive downloaded image

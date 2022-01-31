@@ -1,0 +1,63 @@
+- name: Create temporary build directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: download
+  register: haos_tempdir
+
+- name: Get release list from Home Assistant repository
+  ansible.builtin.uri:
+    url: '{{ HAOS_API_RELEASES_URL }}'
+    return_content: yes
+  register: haos_releases
+
+- name: Determine relevant disk image url for latest release
+  set_fact:
+    haos_release: '{{ haos_releases.json | json_query("[?prerelease == `false`] | [1].assets[?contains(name, `vmdk`)] | [0]") }}'
+
+- name: Download Home Assistant disk image
+  get_url:
+    url: '{{ haos_release.url }}'
+    dest: '{{ haos_tempdir }}/{{ haos_release.name }}'
+
+- name: Unarchive downloaded image
+  ansible.builtin.unarchive:
+    src: '{{ tempdir }}{{ haos_image_url }}'
+    dest: '{{ haos_tempdir }}'
+    remote_src: yes
+
+- fail:
+
+#- name: Create VM
+#  community.general.collection:
+#    api_host: '{{ ansible_host }}'
+#    api_user: '{{ HAOS_PROXMOX_USER }}'
+#    bios: ovmf
+#    cores: '{{ HAOS_PROXMOX_CORES }}'
+#    cpus: '{{ HAOS_PROXMOX_CPUS }}'
+#    description: '{{ HAOS_PROXMOX_DESCRIPTION }}'
+#    format: '{{ HAOS_PROXMOX_FORMAT }}'
+#    hostname: '{{ HAOS_PROXMOX_HOSTNAME }}'
+#    ide: ?
+#    ip_address: '{{ HAOS_PROXMOX_IP_ADDRESS }}'
+#    localtime: yes
+#    memory: '{{ HAOS_PROXMOX_MEMORY }}'
+#    name: '{{ HAOS_PROXMOX_NAME }}'
+#    net:
+#      net0: 'virtio,bridge=vmbr0'
+#    onboot: '{{ HAOS_PROXMOX_ONBOOT }}'
+#    ostype: l26
+#    password: '{{ HAOS_PROXMOX_PASSWORD }}'
+#    protection: '{{ HAOS_PROXMOX_PROTECTION }}'
+#    state: started
+#  register: haos_vm
+#
+#- name: Allocate disk image
+#
+#- name: Import disk to VM
+#
+#
+#- name: Remove temporary directory
+#  ansible.builtin.file:
+#    path: "{{ tempdir.path }}"
+#    state: absent
+#  when: tempdir.path is defined

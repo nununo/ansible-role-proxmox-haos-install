@@ -12,7 +12,7 @@
 
 - name: Determine relevant disk image url for latest release
   set_fact:
-    haos_release: '{{ haos_releases.json | json_query("[?prerelease == `false`] | [1].assets[?contains(name, `vmdk`)] | [0]") }}'
+    haos_release: '{{ haos_releases.json | json_query("[?prerelease == `false`] | [0].assets[?contains(name, `vmdk`)] | [0]") }}'
 
 - name: Download Home Assistant disk image
   get_url:

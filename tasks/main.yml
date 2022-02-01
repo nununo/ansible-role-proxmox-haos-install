@@ -25,30 +25,35 @@
     dest: '{{ haos_tempdir.path }}'
     remote_src: yes
 
-#- name: Create VM
-#  community.general.collection:
-#    api_host: '{{ ansible_host }}'
-#    api_user: '{{ HAOS_PROXMOX_USER }}'
-#    bios: ovmf
-#    cores: '{{ HAOS_PROXMOX_CORES }}'
-#    cpus: '{{ HAOS_PROXMOX_CPUS }}'
-#    description: '{{ HAOS_PROXMOX_DESCRIPTION }}'
-#    format: '{{ HAOS_PROXMOX_FORMAT }}'
-#    hostname: '{{ HAOS_PROXMOX_HOSTNAME }}'
-#    ide: ?
-#    ip_address: '{{ HAOS_PROXMOX_IP_ADDRESS }}'
-#    localtime: yes
-#    memory: '{{ HAOS_PROXMOX_MEMORY }}'
-#    name: '{{ HAOS_PROXMOX_NAME }}'
-#    net:
-#      net0: 'virtio,bridge=vmbr0'
-#    onboot: '{{ HAOS_PROXMOX_ONBOOT }}'
-#    ostype: l26
-#    password: '{{ HAOS_PROXMOX_PASSWORD }}'
-#    protection: '{{ HAOS_PROXMOX_PROTECTION }}'
-#    state: started
-#  register: haos_vm
-#
+- name: Install packages required by proxmox_kvm module
+  apt:
+    pkg:
+    - python3-proxmoxer
+    - python3-requests
+  become: true
+
+- name: Create VM
+  community.general.proxmox_kvm:
+    api_host: '{{ ansible_host }}'
+    api_password: '{{ HAOS_PROXMOX_API_PASSWORD }}'
+    api_user: '{{ HAOS_PROXMOX_API_USER }}'
+    bios: ovmf
+    cores: '{{ HAOS_PROXMOX_CORES }}'
+    description: '{{ HAOS_PROXMOX_DESCRIPTION }}'
+    format: qcow2
+    localtime: yes
+    memory: '{{ HAOS_PROXMOX_MEMORY }}'
+    name: '{{ HAOS_PROXMOX_NAME }}'
+    net:
+      net0: 'virtio,bridge=vmbr0'
+    node: '{{ HAOS_PROXMOX_NODE }}'
+    onboot: '{{ HAOS_PROXMOX_ONBOOT }}'
+    ostype: l26
+    protection: '{{ HAOS_PROXMOX_PROTECTION }}'
+    scsihw: '{{ HAOS_PROXMOX_SCSIHW }}'
+    sockets: '{{ HAOS_PROXMOX_SOCKETS }}'
+  register: haos_vm
+
 #- name: Allocate disk image
 #
 #- name: Import disk to VM

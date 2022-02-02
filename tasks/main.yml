@@ -61,13 +61,13 @@
   register: haos_vm
 
 - name: Import downloaded image
-  ansible.builtin.shell:
+  ansible.builtin.command:
     cmd: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ HAOS_PROXMOX_STORAGE }}'
   become: yes
 
 - name: Have VM use imported image
   ansible.builtin.command:
-    cmd: 'qm set {{ haos_vm.vmid }} -sata0 {{ HAOS_PROXMOX_STORAGE }}:vm-{{ haos_vm.vmid }}-disk-0,size=6G'
+    cmd: 'qm set {{ haos_vm.vmid }} -sata0 {{ HAOS_PROXMOX_STORAGE }}:vm-{{ haos_vm.vmid }}-disk-1,size=6G'
   become: yes
 
 - name: Set boot order

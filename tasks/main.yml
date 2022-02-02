@@ -36,6 +36,16 @@
     - python3-requests
   become: true
 
+- name: Determine network adaptor string when MAC address is specified
+  set_fact:
+    haos_net0: 'virtio={{ HAOS_PROXMOX_MAC_ADDRESS }},bridge=vmbr0'
+  when: HAOS_PROXMOX_MAC_ADDRESS != ''
+
+- name: Determine network adaptor string when MAC address is not specified
+  set_fact:
+    haos_net0: 'virtio,bridge=vmbr0'
+  when: HAOS_PROXMOX_MAC_ADDRESS == ''
+
 - name: Create VM
   community.general.proxmox_kvm:
     agent: yes
@@ -49,7 +59,7 @@
     memory: '{{ HAOS_PROXMOX_MEMORY }}'
     name: '{{ HAOS_PROXMOX_NAME }}'
     net:
-      net0: 'virtio,bridge=vmbr0'
+      net0: '{{ haos_net0 }}'
     node: '{{ HAOS_PROXMOX_NODE }}'
     onboot: '{{ HAOS_PROXMOX_ONBOOT }}'
     ostype: l26
@@ -65,12 +75,12 @@
     cmd: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ HAOS_PROXMOX_STORAGE }}'
   become: yes
 
-- name: Have VM use imported image
+- name: Have VM use the imported image
   ansible.builtin.command:
     cmd: 'qm set {{ haos_vm.vmid }} -sata0 {{ HAOS_PROXMOX_STORAGE }}:vm-{{ haos_vm.vmid }}-disk-1,size=6G'
   become: yes
 
-- name: Set boot order
+- name: Set imported image as first in the boot order
   ansible.builtin.command:
     cmd: 'qm set {{ haos_vm.vmid }} -boot order=sata0'
   become: yes

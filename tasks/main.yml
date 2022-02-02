@@ -1,4 +1,4 @@
-- name: Create temporary build directory
+- name: Create temporary directory
   ansible.builtin.tempfile:
     state: directory
     suffix: download
@@ -10,7 +10,7 @@
     return_content: yes
   register: haos_releases
 
-- name: Determine relevant disk image url for latest release
+- name: Determine relevant asset for latest release (json containing image name and url)
   set_fact:
     haos_release: '{{ haos_releases.json | json_query("[?prerelease == `false`] | [0].assets[?contains(name, `vmdk`)] | [0]") }}'
 
@@ -25,8 +25,12 @@
     dest: '{{ haos_tempdir.path }}'
     remote_src: yes
 
+- name: Determine image filename (downloaded file without the zip extension)
+  set_fact:
+    haos_image_filename: '{{ haos_release.name | regex_search(".*\.vmdk") }}'
+
 - name: Install packages required by proxmox_kvm module
-  apt:
+  ansible.builtin.apt:
     pkg:
     - python3-proxmoxer
     - python3-requests
@@ -34,13 +38,13 @@
 
 - name: Create VM
   community.general.proxmox_kvm:
+    agent: yes
     api_host: '{{ ansible_host }}'
     api_password: '{{ HAOS_PROXMOX_API_PASSWORD }}'
     api_user: '{{ HAOS_PROXMOX_API_USER }}'
     bios: ovmf
     cores: '{{ HAOS_PROXMOX_CORES }}'
     description: '{{ HAOS_PROXMOX_DESCRIPTION }}'
-    format: qcow2
     localtime: yes
     memory: '{{ HAOS_PROXMOX_MEMORY }}'
     name: '{{ HAOS_PROXMOX_NAME }}'
@@ -50,17 +54,23 @@
     onboot: '{{ HAOS_PROXMOX_ONBOOT }}'
     ostype: l26
     protection: '{{ HAOS_PROXMOX_PROTECTION }}'
+    scsi:
+      efidisk0: '{{ HAOS_PROXMOX_STORAGE }}:128'
     scsihw: '{{ HAOS_PROXMOX_SCSIHW }}'
     sockets: '{{ HAOS_PROXMOX_SOCKETS }}'
   register: haos_vm
 
-#- name: Allocate disk image
-#
-#- name: Import disk to VM
-#
-#
-#- name: Remove temporary directory
-#  ansible.builtin.file:
-#    path: "{{ tempdir.path }}"
-#    state: absent
-#  when: tempdir.path is defined
+- name: Import downloaded image
+  ansible.builtin.shell:
+    cmd: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ HAOS_PROXMOX_STORAGE }}'
+  become: yes
+
+- name: Have VM use imported image
+  ansible.builtin.command:
+    cmd: 'qm set {{ haos_vm.vmid }} -sata0 {{ HAOS_PROXMOX_STORAGE }}:vm-{{ haos_vm.vmid }}-disk-0,size=6G'
+  become: yes
+
+- name: Set boot order
+  ansible.builtin.command:
+    cmd: 'qm set {{ haos_vm.vmid }} -boot order=sata0'
+  become: yes

@@ -1,12 +1,12 @@
-HAOS_PROXMOX_API_PASSWORD: PLEASE_REDEFINE_ME
-HAOS_PROXMOX_API_USER: admin@pam
-HAOS_PROXMOX_CORES: 1
-HAOS_PROXMOX_DESCRIPTION: 'Home Assistant'
-HAOS_PROXMOX_MAC_ADDRESS: '' # If left empty a new one will be generated
-HAOS_PROXMOX_MEMORY: 4096
-HAOS_PROXMOX_NAME: homeassistant
-HAOS_PROXMOX_NODE: node
-HAOS_PROXMOX_ONBOOT: yes
-HAOS_PROXMOX_PROTECTION: yes
-HAOS_PROXMOX_SOCKETS: 1
-HAOS_PROXMOX_STORAGE: local
+haos_proxmox_api_password: PLEASE_REDEFINE_ME
+haos_proxmox_api_user: admin@pam
+haos_proxmox_cores: 1
+haos_proxmox_description: 'Home Assistant'
+haos_proxmox_mac_address: '' # If left empty a new one will be generated
+haos_proxmox_memory: 4096
+haos_proxmox_name: homeassistant
+haos_proxmox_node: node
+haos_proxmox_onboot: yes
+haos_proxmox_protection: yes
+haos_proxmox_sockets: 1
+haos_proxmox_storage: local

@@ -70,17 +70,41 @@
     sockets: '{{ haos_proxmox_sockets }}'
   register: haos_vm
 
+- name: Get storage info
+  community.general.proxmox_storage_info:
+    api_host: '{{ ansible_host }}'
+    api_password: '{{ haos_proxmox_api_password }}'
+    api_user: '{{ haos_proxmox_api_user }}'
+    storage: '{{ haos_proxmox_storage }}'
+  register: haos_storage_info
+
+- name: Determine storage type
+  set_fact:
+    haos_storage_type: '{{ haos_storage_info.proxmox_storages[0].type }}'
+
+- name: Import disk command depends on storage type
+  set_fact:
+    haos_importdisk_cmd:
+      zfspool: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ haos_proxmox_storage }}'
+      dir: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ haos_proxmox_storage }} -format qcow2'
+
 - name: Import downloaded image
   ansible.builtin.command:
-    cmd: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ HAOS_PROXMOX_STORAGE }}'
+    cmd: '{{ haos_importdisk_cmd[haos_storage_type] }}'
   become: true
+
+- name: Set disk command depends on storage type
+  set_fact:
+    haos_setdisk_cmd:
+      zfspool: 'qm set {{ haos_vm.vmid }} --sata0 {{ haos_proxmox_storage }}:vm-{{ haos_vm.vmid }}-disk-1'
+      dir: 'qm set {{ haos_vm.vmid }} --sata0 {{ haos_proxmox_storage }}:{{ haos_vm.vmid }}/vm-{{ haos_vm.vmid }}-disk-1.qcow2,size=6G'
 
 - name: Have VM use the imported image
   ansible.builtin.command:
-    cmd: 'qm set {{ haos_vm.vmid }} -sata0 {{ HAOS_PROXMOX_STORAGE }}:vm-{{ haos_vm.vmid }}-disk-1,size=6G'
+    cmd: '{{ haos_setdisk_cmd[haos_storage_type] }}'
   become: true
 
-- name: Set imported image as first in the boot order
+- name: Set boot order
   ansible.builtin.command:
-    cmd: 'qm set {{ haos_vm.vmid }} -boot order=sata0'
+    cmd: 'qm set 115 --boot order=sata0'
   become: true

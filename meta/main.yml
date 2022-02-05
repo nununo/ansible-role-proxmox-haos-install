@@ -1,6 +1,7 @@
 galaxy_info:
+  role_name: proxmox-haos-install
   author: 'Nuno Godinho'
-  description: 'Installs Home Assistant Operating System in a new Proxmox VM'
+  description: 'Installs Home Assistant Operating System in a new Proxmox VM.'
   license: "license (BSD, MIT)"
   min_ansible_version: 2.9
   platforms:
@@ -10,6 +11,17 @@ galaxy_info:
     - bullseye
   galaxy_tags:
   - system
-  - security
-  - hardening
+  - hassio
+  - proxmox
+  - home
+  - assistant
+  - ha
+  - domotics
+  - hacs
+  - hass
+  - hassio
+  - homeautomation
+  - automation
+  - vm
+
 dependencies: []

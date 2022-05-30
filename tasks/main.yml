@@ -111,6 +111,10 @@
     cmd: 'qm set {{ haos_vm.vmid }} --boot order={{ haos_proxmox_storage_interface }}'
   become: true
 
+- name: Wait for changes to apply
+  wait_for:
+    timeout: 5
+
 - name: Start VM
   community.general.proxmox_kvm:
     api_host: '{{ ansible_host }}'
@@ -119,6 +123,7 @@
     name: '{{ haos_proxmox_name }}'
     node: '{{ haos_proxmox_node }}'
     state: started
+    timeout: 300
 
 - name: Cleanup tmp dir
   ansible.builtin.file:

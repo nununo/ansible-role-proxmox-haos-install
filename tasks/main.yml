@@ -106,5 +106,5 @@
 
 - name: Set boot order
   ansible.builtin.command:
-    cmd: 'qm set 115 --boot order=sata0'
+    cmd: 'qm set {{ haos_vm.vmid }} --boot order=sata0'
   become: true

@@ -40,6 +40,8 @@ haos_proxmox_name: homeassistant
 haos_proxmox_onboot: yes
 haos_proxmox_protection: yes
 haos_proxmox_sockets: 1
+haos_proxmox_storage: local
+haos_proxmox_storage_interface: sata0
 ```
 
 Several VM attributes.

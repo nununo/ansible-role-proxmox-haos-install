@@ -96,8 +96,8 @@
 - name: Set disk command depends on storage type
   set_fact:
     haos_setdisk_cmd:
-      zfspool: 'qm set {{ haos_vm.vmid }} --sata0 {{ haos_proxmox_storage }}:vm-{{ haos_vm.vmid }}-disk-1'
-      dir: 'qm set {{ haos_vm.vmid }} --sata0 {{ haos_proxmox_storage }}:{{ haos_vm.vmid }}/vm-{{ haos_vm.vmid }}-disk-1.qcow2,size=6G'
+      zfspool: 'qm set {{ haos_vm.vmid }} --{{ haos_proxmox_storage_interface }} {{ haos_proxmox_storage }}:vm-{{ haos_vm.vmid }}-disk-1'
+      dir: 'qm set {{ haos_vm.vmid }} --{{ haos_proxmox_storage_interface }} {{ haos_proxmox_storage }}:{{ haos_vm.vmid }}/vm-{{ haos_vm.vmid }}-disk-1.qcow2,size={{ haos_proxmox_storage_size }}'
 
 - name: Have VM use the imported image
   ansible.builtin.command:
@@ -106,5 +106,5 @@
 
 - name: Set boot order
   ansible.builtin.command:
-    cmd: 'qm set {{ haos_vm.vmid }} --boot order=sata0'
+    cmd: 'qm set {{ haos_vm.vmid }} --boot order={{ haos_proxmox_storage_interface }}'
   become: true

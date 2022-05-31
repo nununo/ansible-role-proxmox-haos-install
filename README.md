@@ -50,12 +50,18 @@ Several VM attributes.
 
 None.
 
+## Ansible Galaxy Installation
+
+```bash
+ansible-galaxy install nununo.proxmox_haos_install
+```
+
 ## Example Playbook
 
 ```yaml
 - hosts: myproxmox.mydomain.com
   roles:
-  - role: nununo.proxmox-haos-install
+  - role: nununo.proxmox_haos_install
 ```
 
 Example of inventory entry:

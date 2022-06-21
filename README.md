@@ -37,8 +37,8 @@ haos_proxmox_description: 'Home Assistant'
 haos_proxmox_mac_address: '' # If left empty a new one will be generated
 haos_proxmox_memory: 4096
 haos_proxmox_name: homeassistant
-haos_proxmox_onboot: yes
-haos_proxmox_protection: yes
+haos_proxmox_onboot: true
+haos_proxmox_protection: true
 haos_proxmox_sockets: 1
 ```
 

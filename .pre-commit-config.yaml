@@ -17,3 +17,7 @@ repos:
   hooks:
   - id: ansible-lint
     files: \.(yaml|yml)$
+
+#- repo: https://github.com/semaphor-dk/dansabel
+#  hooks:
+#  - id: dansabel

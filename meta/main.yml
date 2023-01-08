@@ -3,7 +3,7 @@ galaxy_info:
   author: 'Nuno Godinho'
   description: 'Installs Home Assistant Operating System in a new Proxmox VM.'
   license: "license (BSD, MIT)"
-  min_ansible_version: 2.9
+  min_ansible_version: '2.9'
   platforms:
   - name: Debian
     versions:

@@ -19,11 +19,11 @@
   register: haos_releases
 
 - name: Determine relevant asset for latest release (json containing image name and url)
-  set_fact:
+  ansible.builtin.set_fact:
     haos_release: '{{ haos_releases.json | json_query("[?prerelease == `false`] | [0].assets[?contains(name, `qcow2`)] | [?contains(name, `ova`)] | [0]") }}'
 
 - name: Download Home Assistant disk image
-  get_url:
+  ansible.builtin.get_url:
     url: '{{ haos_release.browser_download_url }}'
     dest: '{{ haos_tempdir.path }}/{{ haos_release.name }}'
 
@@ -34,16 +34,16 @@
     src: "{{ haos_tempdir.path }}/{{ haos_release.name }}"
 
 - name: Determine image filename (downloaded file without the zip extension)
-  set_fact:
+  ansible.builtin.set_fact:
     haos_image_filename: '{{ haos_release.name | regex_search(".*\.qcow2") }}'
 
 - name: Determine network adaptor string when MAC address is specified
-  set_fact:
+  ansible.builtin.set_fact:
     haos_net0: 'virtio={{ haos_proxmox_mac_address }},bridge=vmbr0'
   when: haos_proxmox_mac_address
 
 - name: Determine network adaptor string when MAC address is not specified
-  set_fact:
+  ansible.builtin.set_fact:
     haos_net0: 'virtio,bridge=vmbr0'
   when: not haos_proxmox_mac_address
 
@@ -81,11 +81,11 @@
   register: haos_storage_info
 
 - name: Determine storage type
-  set_fact:
+  ansible.builtin.set_fact:
     haos_storage_type: '{{ haos_storage_info.proxmox_storages[0].type }}'
 
 - name: Import disk command depends on storage type
-  set_fact:
+  ansible.builtin.set_fact:
     haos_importdisk_cmd:
       zfspool: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ haos_proxmox_storage }}'
       lvmthin: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ haos_proxmox_storage }}'
@@ -97,7 +97,7 @@
   become: true
 
 - name: Set disk command depends on storage type
-  set_fact:
+  ansible.builtin.set_fact:
     haos_setdisk_cmd:
       zfspool: 'qm set {{ haos_vm.vmid }} --{{ haos_proxmox_storage_interface }} {{ haos_proxmox_storage }}:vm-{{ haos_vm.vmid }}-disk-1'
       lvmthin: 'qm set {{ haos_vm.vmid }} --{{ haos_proxmox_storage_interface }} {{ haos_proxmox_storage }}:vm-{{ haos_vm.vmid }}-disk-1'
@@ -114,7 +114,7 @@
   become: true
 
 - name: Wait for changes to apply
-  wait_for:
+  ansible.builtin.wait_for:
     timeout: 5
 
 - name: Start VM

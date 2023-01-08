@@ -88,6 +88,7 @@
   set_fact:
     haos_importdisk_cmd:
       zfspool: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ haos_proxmox_storage }}'
+      lvmthin: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ haos_proxmox_storage }}'
       dir: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ haos_proxmox_storage }} -format qcow2'
 
 - name: Import downloaded image
@@ -99,6 +100,7 @@
   set_fact:
     haos_setdisk_cmd:
       zfspool: 'qm set {{ haos_vm.vmid }} --{{ haos_proxmox_storage_interface }} {{ haos_proxmox_storage }}:vm-{{ haos_vm.vmid }}-disk-1'
+      lvmthin: 'qm set {{ haos_vm.vmid }} --{{ haos_proxmox_storage_interface }} {{ haos_proxmox_storage }}:vm-{{ haos_vm.vmid }}-disk-1'
       dir: 'qm set {{ haos_vm.vmid }} --{{ haos_proxmox_storage_interface }} {{ haos_proxmox_storage }}:{{ haos_vm.vmid }}/vm-{{ haos_vm.vmid }}-disk-1.qcow2'
 
 - name: Have VM use the imported image

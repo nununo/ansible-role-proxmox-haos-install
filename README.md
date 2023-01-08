@@ -50,6 +50,8 @@ Several VM attributes.
 
 None.
 
+Note: While the role doesn't depend on any other roles, it uses `json_query()` which runs in your local machine and requires `jmespath` to be installed locally.
+
 ## Ansible Galaxy Installation
 
 ```bash

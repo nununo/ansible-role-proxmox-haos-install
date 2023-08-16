@@ -29,7 +29,7 @@ The name of the node in which the VM will be installed.
 haos_proxmox_storage: local-zfs
 ```
 
-The storage location where the VM disks (EFI and HAOS image) will be created. Currently only two storage types are supported: ZFS and directory.
+The storage location where the VM disks (EFI and HAOS image) will be created. Currently only three storage types are supported: ZFS, LVM Thin and directory.
 
 ```yaml
 haos_proxmox_cores: 1
@@ -40,7 +40,7 @@ haos_proxmox_name: homeassistant
 haos_proxmox_onboot: true
 haos_proxmox_protection: true
 haos_proxmox_sockets: 1
-haos_proxmox_storage: local
+haos_proxmox_storage: local-lvm
 haos_proxmox_storage_interface: sata0
 ```
 

@@ -1,133 +1,141 @@
-- name: Install packages required by proxmox_kvm module
-  ansible.builtin.apt:
-    pkg:
-    - python3-proxmoxer
-    - python3-requests
-    - xz-utils
-  become: true
+- name: Create and configure HaOS VM
+  block:
+  - name: Install packages required by proxmox_kvm module
+    ansible.builtin.apt:
+      pkg:
+      - python3-proxmoxer
+      - python3-requests
+      - xz-utils
+    become: true
 
-- name: Create temporary directory
-  ansible.builtin.tempfile:
-    state: directory
-    suffix: download
-  register: haos_tempdir
+  - name: Create temporary directory
+    ansible.builtin.tempfile:
+      state: directory
+      suffix: download
+    register: haos_tempdir
 
-- name: Get release list from Home Assistant repository
-  ansible.builtin.uri:
-    url: '{{ haos_api_releases_url }}'
-    return_content: true
-  register: haos_releases
+  - name: Get release list from Home Assistant repository
+    ansible.builtin.uri:
+      url: '{{ haos_api_releases_url }}'
+      return_content: true
+    register: haos_releases
 
-- name: Determine relevant asset for latest release (json containing image name and url)
-  ansible.builtin.set_fact:
-    haos_release: '{{ haos_releases.json | json_query("[?prerelease == `false`] | [0].assets[?contains(name, `qcow2`)] | [?contains(name, `ova`)] | [0]") }}'
+  - name: Determine relevant asset for latest release (json containing image name and url)
+    ansible.builtin.set_fact:
+      haos_release: '{{ haos_releases.json | json_query("[?prerelease == `false`] | [0].assets[?contains(name, `qcow2`)] | [?contains(name, `ova`)] | [0]") }}'
 
-- name: Download Home Assistant disk image
-  ansible.builtin.get_url:
-    url: '{{ haos_release.browser_download_url }}'
-    dest: '{{ haos_tempdir.path }}/{{ haos_release.name }}'
+  - name: Download Home Assistant disk image
+    ansible.builtin.get_url:
+      url: '{{ haos_release.browser_download_url }}'
+      dest: '{{ haos_tempdir.path }}/{{ haos_release.name }}'
 
-- name: Unarchive downloaded image
-  ansible.builtin.command:
-    cmd: 'unxz {{ src }}'
-  vars:
-    src: "{{ haos_tempdir.path }}/{{ haos_release.name }}"
+  - name: Unarchive downloaded image
+    ansible.builtin.command:
+      cmd: 'unxz {{ src }}'
+    vars:
+      src: "{{ haos_tempdir.path }}/{{ haos_release.name }}"
 
-- name: Determine image filename (downloaded file without the zip extension)
-  ansible.builtin.set_fact:
-    haos_image_filename: '{{ haos_release.name | regex_search(".*\.qcow2") }}'
+  - name: Determine image filename (downloaded file without the zip extension)
+    ansible.builtin.set_fact:
+      haos_image_filename: '{{ haos_release.name | regex_search(".*\.qcow2") }}'
 
-- name: Determine network adaptor string when MAC address is specified
-  ansible.builtin.set_fact:
-    haos_net0: 'virtio={{ haos_proxmox_mac_address }},bridge=vmbr0'
-  when: haos_proxmox_mac_address
+  - name: Determine network adaptor string when MAC address is specified
+    ansible.builtin.set_fact:
+      haos_net0: 'virtio={{ haos_proxmox_mac_address }},bridge=vmbr0'
+    when: haos_proxmox_mac_address
 
-- name: Determine network adaptor string when MAC address is not specified
-  ansible.builtin.set_fact:
-    haos_net0: 'virtio,bridge=vmbr0'
-  when: not haos_proxmox_mac_address
+  - name: Determine network adaptor string when MAC address is not specified
+    ansible.builtin.set_fact:
+      haos_net0: 'virtio,bridge=vmbr0'
+    when: not haos_proxmox_mac_address
 
-- name: Create VM
-  community.general.proxmox_kvm:
-    agent: true
-    api_host: '{{ ansible_host }}'
-    api_password: '{{ haos_proxmox_api_password }}'
-    api_user: '{{ haos_proxmox_api_user }}'
-    bios: ovmf
-    cores: '{{ haos_proxmox_cores }}'
-    description: '{{ haos_proxmox_description }}'
-    localtime: true
-    machine: q35
-    memory: '{{ haos_proxmox_memory }}'
-    name: '{{ haos_proxmox_name }}'
-    net:
-      net0: '{{ haos_net0 }}'
-    node: '{{ haos_proxmox_node }}'
-    onboot: '{{ haos_proxmox_onboot }}'
-    ostype: l26
-    protection: '{{ haos_proxmox_protection }}'
-    scsi:
-      efidisk0: '{{ haos_proxmox_storage }}:128'
-    scsihw: '{{ haos_proxmox_scsihw }}'
-    sockets: '{{ haos_proxmox_sockets }}'
-  register: haos_vm
+  - name: Create VM
+    community.general.proxmox_kvm:
+      agent: true
+      api_host: '{{ ansible_host }}'
+      api_password: '{{ haos_proxmox_api_password }}'
+      api_user: '{{ haos_proxmox_api_user }}'
+      autostart: false
+      bios: ovmf
+      efidisk0:
+        storage: local-lvm
+        format: raw
+        efitype: 4m
+        pre_enrolled_keys: false
+      cores: '{{ haos_proxmox_cores }}'
+      description: '{{ haos_proxmox_description }}'
+      localtime: true
+      machine: q35
+      memory: '{{ haos_proxmox_memory }}'
+      name: '{{ haos_proxmox_name }}'
+      net:
+        net0: '{{ haos_net0 }}'
+      node: '{{ haos_proxmox_node }}'
+      onboot: '{{ haos_proxmox_onboot }}'
+      ostype: l26
+      protection: '{{ haos_proxmox_protection }}'
+      scsihw: '{{ haos_proxmox_scsihw }}'
+      sockets: '{{ haos_proxmox_sockets }}'
+      vmid: '{{ haos_proxmox_vmid }}'
+    register: haos_vm
 
-- name: Get storage info
-  community.general.proxmox_storage_info:
-    api_host: '{{ ansible_host }}'
-    api_password: '{{ haos_proxmox_api_password }}'
-    api_user: '{{ haos_proxmox_api_user }}'
-    storage: '{{ haos_proxmox_storage }}'
-  register: haos_storage_info
+  - name: Get storage info
+    community.general.proxmox_storage_info:
+      api_host: '{{ ansible_host }}'
+      api_password: '{{ haos_proxmox_api_password }}'
+      api_user: '{{ haos_proxmox_api_user }}'
+      storage: '{{ haos_proxmox_storage }}'
+    register: haos_storage_info
 
-- name: Determine storage type
-  ansible.builtin.set_fact:
-    haos_storage_type: '{{ haos_storage_info.proxmox_storages[0].type }}'
+  - name: Determine storage type
+    ansible.builtin.set_fact:
+      haos_storage_type: '{{ haos_storage_info.proxmox_storages[0].type }}'
 
-- name: Import disk command depends on storage type
-  ansible.builtin.set_fact:
-    haos_importdisk_cmd:
-      zfspool: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ haos_proxmox_storage }}'
-      lvmthin: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ haos_proxmox_storage }}'
-      dir: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ haos_proxmox_storage }} -format qcow2'
+  - name: Import disk command depends on storage type
+    ansible.builtin.set_fact:
+      haos_importdisk_cmd:
+        zfspool: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ haos_proxmox_storage }}'
+        lvmthin: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ haos_proxmox_storage }}'
+        dir: 'qm importdisk {{ haos_vm.vmid }} {{ haos_tempdir.path }}/{{ haos_image_filename }} {{ haos_proxmox_storage }} -format qcow2'
 
-- name: Import downloaded image
-  ansible.builtin.command:
-    cmd: '{{ haos_importdisk_cmd[haos_storage_type] }}'
-  become: true
+  - name: Import downloaded image
+    ansible.builtin.command:
+      cmd: '{{ haos_importdisk_cmd[haos_storage_type] }}'
+    become: true
 
-- name: Set disk command depends on storage type
-  ansible.builtin.set_fact:
-    haos_setdisk_cmd:
-      zfspool: 'qm set {{ haos_vm.vmid }} --{{ haos_proxmox_storage_interface }} {{ haos_proxmox_storage }}:vm-{{ haos_vm.vmid }}-disk-1'
-      lvmthin: 'qm set {{ haos_vm.vmid }} --{{ haos_proxmox_storage_interface }} {{ haos_proxmox_storage }}:vm-{{ haos_vm.vmid }}-disk-1'
-      dir: 'qm set {{ haos_vm.vmid }} --{{ haos_proxmox_storage_interface }} {{ haos_proxmox_storage }}:{{ haos_vm.vmid }}/vm-{{ haos_vm.vmid }}-disk-1.qcow2'
+  - name: Set disk command depends on storage type
+    ansible.builtin.set_fact:
+      haos_setdisk_cmd:
+        zfspool: 'qm set {{ haos_vm.vmid }} --{{ haos_proxmox_storage_interface }} {{ haos_proxmox_storage }}:vm-{{ haos_vm.vmid }}-disk-1'
+        lvmthin: 'qm set {{ haos_vm.vmid }} --{{ haos_proxmox_storage_interface }} {{ haos_proxmox_storage }}:vm-{{ haos_vm.vmid }}-disk-1'
+        dir: 'qm set {{ haos_vm.vmid }} --{{ haos_proxmox_storage_interface }} {{ haos_proxmox_storage }}:{{ haos_vm.vmid }}/vm-{{ haos_vm.vmid }}-disk-1.qcow2'
 
-- name: Have VM use the imported image
-  ansible.builtin.command:
-    cmd: '{{ haos_setdisk_cmd[haos_storage_type] }}'
-  become: true
+  - name: Have VM use the imported image
+    ansible.builtin.command:
+      cmd: '{{ haos_setdisk_cmd[haos_storage_type] }}'
+    become: true
 
-- name: Set boot order
-  ansible.builtin.command:
-    cmd: 'qm set {{ haos_vm.vmid }} --boot order={{ haos_proxmox_storage_interface }}'
-  become: true
+  - name: Set boot order
+    ansible.builtin.command:
+      cmd: 'qm set {{ haos_vm.vmid }} --boot order={{ haos_proxmox_storage_interface }}'
+    become: true
 
-- name: Wait for changes to apply
-  ansible.builtin.wait_for:
-    timeout: 5
+  - name: Wait for changes to apply
+    ansible.builtin.wait_for:
+      timeout: 5
 
-- name: Start VM
-  community.general.proxmox_kvm:
-    api_host: '{{ ansible_host }}'
-    api_password: '{{ haos_proxmox_api_password }}'
-    api_user: '{{ haos_proxmox_api_user }}'
-    name: '{{ haos_proxmox_name }}'
-    node: '{{ haos_proxmox_node }}'
-    state: started
-    timeout: 300
+  - name: Start VM
+    community.general.proxmox_kvm:
+      api_host: '{{ ansible_host }}'
+      api_password: '{{ haos_proxmox_api_password }}'
+      api_user: '{{ haos_proxmox_api_user }}'
+      name: '{{ haos_proxmox_name }}'
+      node: '{{ haos_proxmox_node }}'
+      state: started
+      timeout: 300
 
-- name: Cleanup tmp dir
-  ansible.builtin.file:
-    path: "{{ haos_tempdir.path }}"
-    state: absent
+  always:
+  - name: Cleanup tmp dir
+    ansible.builtin.file:
+      path: "{{ haos_tempdir.path }}"
+      state: absent

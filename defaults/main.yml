@@ -11,3 +11,4 @@ haos_proxmox_protection: true
 haos_proxmox_sockets: 1
 haos_proxmox_storage: local
 haos_proxmox_storage_interface: sata0
+haos_proxmox_vmid: 1000

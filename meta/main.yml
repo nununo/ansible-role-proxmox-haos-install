@@ -1,5 +1,6 @@
 galaxy_info:
   role_name: proxmox_haos_install
+  namespace: nununo
   author: 'Nuno Godinho'
   description: 'Installs Home Assistant Operating System in a new Proxmox VM.'
   license: "license (BSD, MIT)"

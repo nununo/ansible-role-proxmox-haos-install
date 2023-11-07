@@ -1,2 +1,1 @@
 haos_api_releases_url: 'https://api.github.com/repos/home-assistant/operating-system/releases'
-haos_proxmox_scsihw: virtio-scsi-pci

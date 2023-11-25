@@ -58,7 +58,7 @@
       autostart: false
       bios: ovmf
       efidisk0:
-        storage: local-lvm
+        storage: '{{ haos_proxmox_storage }}'
         format: raw
         efitype: 4m
         pre_enrolled_keys: false
